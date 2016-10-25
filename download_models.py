@@ -1,4 +1,5 @@
 """Download the models for the demo into the data/ folder."""
+from __future__ import absolute_import, division, print_function
 import urllib
 import hashlib
 from os import makedirs
@@ -36,7 +37,7 @@ def md5_hash(filepath):
         return sha.hexdigest()
 
 
-if __name__ == '__main__':
+def ensure_models():
     # Model URLs and associated MD5 hashes
     model_url_list = [
         ('http://www.vlfeat.org/matconvnet/models/imagenet-vgg-verydeep-16.mat',
@@ -66,3 +67,7 @@ if __name__ == '__main__':
         message = 'Invalid MD5 hash of %r, please rerun this script' % args
         assert md5_hash(model_filepath) == model_hash, message
         print('Verified %r (md5 = %s)' % (model_filename, model_hash, ))
+
+
+if __name__ == '__main__':
+    ensure_models()
