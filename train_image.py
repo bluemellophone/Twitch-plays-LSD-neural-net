@@ -53,16 +53,16 @@ nn.layers.set_all_param_values(model.out, pretrained_params)
 
 all_layers = nn.layers.get_all_layers(model.out)
 
-
 num_params = nn.layers.count_params(model.out)
 print "  number of parameters: %d" % num_params
 print "  layer output shapes:"
-for layer in all_layers:
+layer_shapes = nn.layers.get_output_shape(all_layers)
+for layer, layer_shape in zip(all_layers, layer_shapes):
     name = string.ljust(layer.__class__.__name__, 32)
-    print "    %s %s" % (name, layer.get_output_shape(),)
+    print "    %s %s" % (name, layer_shape,)
 
 
-x = nn.utils.shared_empty(dim=len(model.input.get_output_shape()))
+x = nn.utils.shared_empty(dim=len(nn.layers.get_output_shape(model.input)))
 x.set_value(cfg.image.astype("float32").reshape((1,)+cfg.image.shape))
 
 interesting_features = theano.shared(np.array(range(cfg.n_classes), dtype='int32'))
@@ -82,8 +82,8 @@ def l_from_network(inp, pool=1):
                        pool))
     inp = inp.mean(axis=(3,5))
 
-    network_output = model.to_strengthen.get_output(inp-cfg.mean_img)
-    output_shape = model.to_strengthen.get_output_shape()
+    network_output = nn.layers.get_output(model.to_strengthen, inputs=inp-cfg.mean_img)
+    output_shape = nn.layers.get_output_shape(model.to_strengthen)
     return (-( network_output[0,interesting_features[0],output_shape[2]/2:,:]).mean()
             -( network_output[0,interesting_features[1],:output_shape[2]/2,:]).mean()
            + ( network_output[0,:,:,:]).mean()
@@ -181,7 +181,7 @@ givens = {
 print "Compiling"
 idx = T.lscalar('idx')
 iter_train = theano.function([idx], [train_loss,l], givens=givens, updates=updates, on_unused_input='ignore')
-compute_output = theano.function([idx], model.to_strengthen.get_output(deterministic=True), givens=givens, on_unused_input='ignore')
+compute_output = theano.function([idx], nn.layers.get_output(model.to_strengthen, deterministic=True), givens=givens, on_unused_input='ignore')
 
 ################################################################################
 #                                                                         TRAIN
@@ -202,6 +202,8 @@ e = 0
 classes = np.load("data/classes.npy")
 d = {d[0]:i for i,d in enumerate(classes)}
 
+if not os.path.exists('results'):
+    os.makedirs('results')
 
 features = ([d['volcano']]*2)[:2]
 interesting_features.set_value(np.array(features, dtype='int32'))
