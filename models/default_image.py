@@ -21,7 +21,7 @@ height = 576 #576 #336#720 #multiple of 2
 estimated_input_fps=15./steps_per_zoom
 n_classes = 1000
 
-total_steps = 100
+total_steps = 5000
 
 #Determines also the scale of the entire thing!
 image = scipy.misc.imread(glob("hd1.*")[0])
